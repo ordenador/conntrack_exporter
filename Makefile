@@ -29,11 +29,11 @@ run: ## run
 	./conntrack_exporter
 
 docker_build_base: ## docker_build_base
-	docker build -t ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-centos7-base -f dockerfiles/Dockerfile_centos7_base .
-	docker build -t ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-ubuntu-base -f dockerfiles/Dockerfile_ubuntu_base .
+	docker build -t ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-centos7 -f dockerfiles/Dockerfile_centos7_compiler .
+	docker build -t ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-ubuntu -f dockerfiles/Dockerfile_ubuntu_compiler .
 
 compiler_run_docker: docker_build_base ## compiler_run_docker
-	docker run --rm -v $$(pwd):/home/conntrack ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-centos7-base \
+	docker run --rm -v $$(pwd):/home/conntrack ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-centos7 \
 		/bin/bash -c "bazel build -c dbg //:conntrack_exporter && cp -f bazel-bin/conntrack_exporter ."
 
 build_docker: compiler_run_docker ## build_docker
@@ -48,12 +48,17 @@ run_docker: ## run_docker
 		ordenador/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)-centos7
 
 publish_docker: build_docker ## publish_docker
-	docker tag hiveco/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION) hiveco/conntrack_exporter:latest
-	docker push hiveco/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)
-	docker push hiveco/conntrack_exporter:latest
+	docker push ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-centos7
+	docker push ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-ubuntu
+	docker push ordenador/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)-centos7
+	docker push ordenador/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)-ubuntu
+	docker tag ordenador/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)-centos7 ordenador/conntrack_exporter:latest
+	docker push ordenador/conntrack_exporter:latest
+
 
 clean: base_image_local ## clean
 	docker run --rm -v $$(pwd):/home/conntrack conntrack_exporter:local /bin/bash -c "bazel clean"
 	rm -fr .cache
+	rm -fr .pki
 	rm -f conntrack_exporter
 	docker rmi -f $$(docker images | grep 'conntrack_exporter' | awk '{print $$3}')
