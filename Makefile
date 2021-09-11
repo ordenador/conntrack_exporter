@@ -11,7 +11,7 @@ help: ## This help.
 
 
 base_image_local: ## base_image_local
-	docker build -t conntrack_exporter:local -f dockerfiles/Dockerfile_centos7_base .
+	docker build -t conntrack_exporter:local -f dockerfiles/Dockerfile_centos7_compiler .
 
 compile_docker_local: ## base_image_local
 	docker run --rm -v $$(pwd):/home/conntrack conntrack_exporter:local /bin/bash -c "bazel build -c dbg //:conntrack_exporter && cp -f bazel-bin/conntrack_exporter ."
@@ -35,6 +35,7 @@ docker_build_base: ## docker_build_base
 compiler_run_docker: docker_build_base ## compiler_run_docker
 	docker run --rm -v $$(pwd):/home/conntrack ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-centos7 \
 		/bin/bash -c "bazel build -c dbg //:conntrack_exporter && cp -f bazel-bin/conntrack_exporter ."
+	tar -czf conntrack_exporter.tar.gz conntrack_exporter
 
 build_docker: compiler_run_docker ## build_docker
 	docker build -t ordenador/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)-centos7 -f dockerfiles/Dockerfile_centos7 .
@@ -61,4 +62,5 @@ clean: base_image_local ## clean
 	rm -fr .cache
 	rm -fr .pki
 	rm -f conntrack_exporter
+	rm -f conntrack_exporter.tar.gz
 	docker rmi -f $$(docker images | grep 'conntrack_exporter' | awk '{print $$3}')
