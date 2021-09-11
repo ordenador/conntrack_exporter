@@ -3,3 +3,5 @@ conntrack_exporter
 TODO
 .cache
 .pki
+*.tar.gz
+.DS_Store
