@@ -1,11 +1,40 @@
-git_repository(
-    name = "prometheus_cpp",
-    remote = "https://github.com/jupp0r/prometheus-cpp.git",
-    commit = "871a7673772b266135cc8422490578da1cf63004",
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
+http_archive(
+    name = "com_github_jupp0r_prometheus_cpp",
+    strip_prefix = "prometheus-cpp-master",
+    urls = ["https://github.com/jupp0r/prometheus-cpp/archive/master.zip"],
 )
 
-load("@prometheus_cpp//:repositories.bzl", "prometheus_cpp_repositories")
+load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
+
 prometheus_cpp_repositories()
 
-load("//:repositories.bzl", "conntrack_exporter_dependencies")
-conntrack_exporter_dependencies()
+
+new_local_repository(
+    name = "libnetfilter_conntrack",
+    path = "/usr/include",
+    build_file_content = """
+cc_library(
+    name = "libnetfilter_conntrack",
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)
+"""
+)
+
+
+new_git_repository(
+    name = "argagg",
+    remote = "https://github.com/vietjtnguyen/argagg.git",
+    tag = "0.4.6",
+    build_file_content = """
+cc_library(
+    name = "argagg",
+    hdrs = ["include/argagg/argagg.hpp"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+"""
+)

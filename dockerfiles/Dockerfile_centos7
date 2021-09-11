@@ -1,0 +1,11 @@
+FROM centos:7
+
+# basic packages
+RUN \
+  yum update -y \
+  && yum install -y libnetfilter_conntrack \
+  && yum clean all
+
+ADD conntrack_exporter /bin/
+
+ENTRYPOINT ["conntrack_exporter"]

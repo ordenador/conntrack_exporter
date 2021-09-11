@@ -1,0 +1,17 @@
+FROM centos:7
+
+# basic packages
+RUN \
+  curl https://copr.fedorainfracloud.org/coprs/vbatts/bazel/repo/epel-7/vbatts-bazel-epel-7.repo -o /etc/yum.repos.d/vbatts-bazel-epel-7.repo \
+  && yum update -y \
+  && yum group install "Development Tools" -y \
+  && yum install -y \
+  git \
+  libnetfilter_conntrack-devel \
+  bazel4 \
+  && yum clean all
+
+RUN useradd -rm -d /home/conntrack -s /bin/bash conntrack
+USER conntrack
+WORKDIR /home/conntrack
+CMD ["bash"]

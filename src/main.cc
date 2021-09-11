@@ -2,10 +2,13 @@
 #include <thread>
 #include <signal.h>
 
+#include <iostream>
+
 #include <argagg/argagg.hpp>
 
 #include <prometheus/exposer.h>
 #include <prometheus/registry.h>
+#include "prometheus/gauge.h"
 
 #include "connection_table.h"
 

@@ -1,34 +1,59 @@
-CONNTRACK_EXPORTER_VERSION = 0.3
+SHELL=/bin/sh
 
-build:
+CONNTRACK_EXPORTER_VERSION = 0.4
+
+.PHONY: help
+
+help: ## This help.
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf " \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+.DEFAULT_GOAL := help
+
+
+base_image_local: ## base_image_local
+	docker build -t conntrack_exporter:local -f dockerfiles/Dockerfile_centos7_base .
+
+compile_docker_local: ## base_image_local
+	docker run --rm -v $$(pwd):/home/conntrack conntrack_exporter:local /bin/bash -c "bazel build -c dbg //:conntrack_exporter && cp -f bazel-bin/conntrack_exporter ."
+
+build: ## build
 	bazel build -c dbg //:conntrack_exporter
 	cp -f bazel-bin/conntrack_exporter .
 
-build_stripped:
+build_stripped: ## build_stripped
 	bazel build --strip=always -c opt //:conntrack_exporter
 	cp -f bazel-bin/conntrack_exporter .
 
 # May need to run make via sudo for this:
-run:
+run: ## run
 	./conntrack_exporter
 
-build_docker: build_stripped
-	docker build -t hiveco/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION) .
+docker_build_base: ## docker_build_base
+	docker build -t ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-centos7-base -f dockerfiles/Dockerfile_centos7_base .
+	docker build -t ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-ubuntu-base -f dockerfiles/Dockerfile_ubuntu_base .
 
-run_docker: build_docker
+compiler_run_docker: docker_build_base ## compiler_run_docker
+	docker run --rm -v $$(pwd):/home/conntrack ordenador/conntrack_exporter_compiler:$(CONNTRACK_EXPORTER_VERSION)-centos7-base \
+		/bin/bash -c "bazel build -c dbg //:conntrack_exporter && cp -f bazel-bin/conntrack_exporter ."
+
+build_docker: compiler_run_docker ## build_docker
+	docker build -t ordenador/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)-centos7 -f dockerfiles/Dockerfile_centos7 .
+	docker build -t ordenador/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)-ubuntu -f dockerfiles/Dockerfile_ubuntu .
+
+run_docker: ## run_docker
 	docker run -it --rm \
 		--cap-add=NET_ADMIN \
 		--name=conntrack_exporter \
 		--net=host \
-		hiveco/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)
+		ordenador/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)-centos7
 
-publish_docker: build_docker
+publish_docker: build_docker ## publish_docker
 	docker tag hiveco/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION) hiveco/conntrack_exporter:latest
 	docker push hiveco/conntrack_exporter:$(CONNTRACK_EXPORTER_VERSION)
 	docker push hiveco/conntrack_exporter:latest
 
-clean:
-	bazel clean
+clean: base_image_local ## clean
+	docker run --rm -v $$(pwd):/home/conntrack conntrack_exporter:local /bin/bash -c "bazel clean"
+	rm -fr .cache
 	rm -f conntrack_exporter
-
-.PHONY: build run build_docker run_docker publish_docker clean
+	docker rmi -f $$(docker images | grep 'conntrack_exporter' | awk '{print $$3}')
