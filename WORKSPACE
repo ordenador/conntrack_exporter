@@ -8,7 +8,6 @@ http_archive(
 )
 
 load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
-
 prometheus_cpp_repositories()
 
 

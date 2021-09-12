@@ -1,6 +1,6 @@
 SHELL=/bin/sh
 
-CONNTRACK_EXPORTER_VERSION = 0.4
+CONNTRACK_EXPORTER_VERSION = 0.4.1
 
 .PHONY: help
 
@@ -62,5 +62,5 @@ clean: base_image_local ## clean
 	rm -fr .cache
 	rm -fr .pki
 	rm -f conntrack_exporter
-	rm -f conntrack_exporter-v$(CONNTRACK_EXPORTER_VERSION).linux-amd64.tar.gz
+	rm -f conntrack_exporter-v*.linux-amd64.tar.gz
 	docker rmi -f $$(docker images | grep 'conntrack_exporter' | awk '{print $$3}')

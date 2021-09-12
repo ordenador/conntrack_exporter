@@ -96,7 +96,7 @@ bool ConnectionTable::isIgnoredHost(const string& host) const
 {
     return (find(this->ignored_hosts.begin(),
                  this->ignored_hosts.end(),
-                 host) != this->ignored_hosts.end());
+                 host.substr(0, host.find(':'))) != this->ignored_hosts.end());
 }
 
 int ConnectionTable::nfct_callback_attach(enum nf_conntrack_msg_type type, struct nf_conntrack* ct, void* data)
